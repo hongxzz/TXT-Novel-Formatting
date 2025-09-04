@@ -1,0 +1,1358 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文本清理工具</title>
+    <link rel="stylesheet" href="https://github.com/hongxzz/TXT-Novel-Formatting/blob/main/all.min.css">
+    
+    <!-- 
+        BSD 2-Clause License
+
+        Copyright (c) 2025, Liu Yunwei
+
+        Redistribution and use in source and binary forms, with or without
+        modification, are permitted provided that the following conditions are met:
+
+        1. Redistributions of source code must retain the above copyright notice, this
+        list of conditions and the following disclaimer.
+
+        2. Redistributions in binary form must reproduce the above copyright notice,
+        this list of conditions and the following disclaimer in the documentation
+        and/or other materials provided with the distribution.
+
+        THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+        AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+        IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+        DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+        FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+        DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+        SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+        CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+        OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+        OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+    -->
+    
+    <style>
+        /* ======================== */
+        /* === 全局变量与重置样式 === */
+        /* ======================== */
+        :root {
+            --primary-color: #4e73df;
+            --secondary-color: #858796;
+            --success-color: #1cc88a;
+            --warning-color: #f6c23e;
+            --danger-color: #e74a3b;
+            --light-bg: #f8f9fc;
+            --dark-text: #5a5c69;
+            --border-color: #e3e6f0;
+            --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background-color: #f8f9fc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--dark-text);
+            line-height: 1.6;
+        }
+        
+        /* ================== */
+        /* === 布局与容器样式 === */
+        /* ================== */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+        
+        header p {
+            font-size: 1.1rem;
+            color: var(--secondary-color);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        /* ================= */
+        /* === 文件导入区域 === */
+        /* ================= */
+        .file-import-card {
+            background-color: white;
+            border-radius: 12px;
+            padding: 2.5rem;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 2rem;
+            text-align: center;
+            border: 2px dashed var(--border-color);
+            transition: all 0.3s ease;
+        }
+        
+        .file-import-card:hover {
+            border-color: var(--primary-color);
+            background-color: rgba(78, 115, 223, 0.03);
+        }
+        
+        .file-import-card i {
+            font-size: 3.5rem;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+        }
+        
+        .file-import-card h2 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark-text);
+        }
+        
+        .file-import-card p {
+            color: var(--secondary-color);
+            margin-bottom: 1.5rem;
+        }
+        
+        /* ============= */
+        /* === 按钮样式 === */
+        /* ============= */
+        .btn {
+            padding: 0.8rem 1.8rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: none;
+            text-decoration: none;
+        }
+        
+        .btn i {
+            margin-right: 0.5rem;
+            font-size: 1.2rem;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #3a5bca;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(58, 91, 202, 0.2);
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #17a673;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(28, 200, 138, 0.2);
+        }
+        
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        .btn-outline:hover {
+            background-color: rgba(78, 115, 223, 0.1);
+        }
+        
+        /* ================= */
+        /* === 文件信息卡片 === */
+        /* ================= */
+        .file-info-card {
+            background-color: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 2rem;
+            display: none;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .info-label {
+            font-size: 0.9rem;
+            color: var(--secondary-color);
+            margin-bottom: 0.3rem;
+        }
+        
+        .info-value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--dark-text);
+        }
+        
+        /* ================== */
+        /* === 操作区域样式 === */
+        /* ================== */
+        .action-section {
+            text-align: center;
+            margin-bottom: 2rem;
+            display: none;
+        }
+        
+        /* ================= */
+        /* === 进度条样式 === */
+        /* ================= */
+        .progress-card {
+            background-color: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 2rem;
+            display: none;
+        }
+        
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.8rem;
+        }
+        
+        .progress-bar {
+            height: 12px;
+            border-radius: 6px;
+            background-color: #e9ecef;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: var(--primary-color);
+            border-radius: 6px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        /* ================= */
+        /* === 统计区域样式 === */
+        /* ================= */
+        .stats-section {
+            display: none;
+            margin-bottom: 2rem;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            color: var(--dark-text);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background-color: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--card-shadow);
+            text-align: center;
+        }
+        
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .stat-icon.removed {
+            color: var(--danger-color);
+        }
+        
+        .stat-icon.modified {
+            color: var(--warning-color);
+        }
+        
+        .stat-icon.cleaned {
+            color: var(--success-color);
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            font-size: 1.1rem;
+            color: var(--secondary-color);
+        }
+        
+        /* ================= */
+        /* === 表格区域样式 === */
+        /* ================= */
+        .table-section {
+            display: none;
+            margin-bottom: 2rem;
+        }
+        
+        .table-card {
+            background-color: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--card-shadow);
+            overflow-x: auto;
+        }
+        
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--light-bg);
+        }
+        
+        .table-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--dark-text);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+        
+        th {
+            background-color: var(--light-bg);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--dark-text);
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .char-type {
+            display: flex;
+            align-items: center;
+        }
+        
+        .char-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            margin-right: 0.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .char-icon.control {
+            background-color: rgba(231, 74, 59, 0.1);
+            color: var(--danger-color);
+        }
+        
+        .char-icon.symbol {
+            background-color: rgba(246, 194, 62, 0.1);
+            color: var(--warning-color);
+        }
+        
+        .char-icon.other {
+            background-color: rgba(133, 135, 150, 0.1);
+            color: var(--secondary-color);
+        }
+        
+        .char-icon.letter {
+            background-color: rgba(78, 115, 223, 0.1);
+            color: var(--primary-color);
+        }
+        
+        .char-icon.emoji {
+            background-color: rgba(28, 200, 138, 0.1);
+            color: var(--success-color);
+        }
+        
+        /* ================= */
+        /* === 操作按钮样式 === */
+        /* ================= */
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        /* ================= */
+        /* === 页脚区域样式 === */
+        /* ================= */
+        footer {
+            text-align: center;
+            padding: 2rem 0;
+            color: var(--secondary-color);
+            font-size: 0.95rem;
+            margin-top: 2rem;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        /* ================= */
+        /* === 高级设置样式 === */
+        /* ================= */
+        .advanced-settings {
+            margin-top: 1rem;
+            text-align: center;
+        }
+        
+        .settings-link {
+            color: var(--primary-color);
+            cursor: pointer;
+            font-size: 0.95rem;
+            text-decoration: underline;
+        }
+        
+        .settings-link:hover {
+            color: #3a5bca;
+        }
+        
+        /* ================= */
+        /* === 模态框样式 === */
+        /* ================= */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            border-radius: 12px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--dark-text);
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--secondary-color);
+        }
+        
+        .close-btn:hover {
+            color: var(--dark-text);
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--dark-text);
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        
+        .form-group textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: monospace;
+            min-height: 150px;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(78, 115, 223, 0.2);
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .form-note {
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--secondary-color);
+        }
+        
+        /* ================= */
+        /* === 文件选择按钮 === */
+        /* ================= */
+        .select-file-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .select-file-btn i {
+            margin-right: 0.5rem;
+            font-size: 1.2rem;
+        }
+        
+        /* ================= */
+        /* === 辅助类样式 === */
+        /* ================= */
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 页面标题区域 -->
+        <header>
+            <h1><i class="fas fa-file-alt"></i> 文本清理工具</h1>
+            <p>清理文本文件中的非中英文、数字和标点符号，并删除空行</p>
+        </header>
+        
+        <!-- 文件导入区域 -->
+        <div class="file-import-card" id="drop-area">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <h2>拖放文件到此处或点击上传</h2>
+            <p>支持.txt文本文件，最大支持100MB</p>
+            <button class="btn btn-primary select-file-btn" id="select-file-btn">
+                选择文件
+            </button>
+            <input type="file" id="file-input" accept=".txt" hidden>
+        </div>
+        
+        <!-- 文件信息显示区域 -->
+        <div class="file-info-card" id="file-info">
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">文件名</span>
+                    <span class="info-value" id="file-name">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">文件大小</span>
+                    <span class="info-value" id="file-size">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">总行数</span>
+                    <span class="info-value" id="line-count">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">总字符数</span>
+                    <span class="info-value" id="char-count">-</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 操作按钮区域 -->
+        <div class="action-section" id="action-section">
+            <button class="btn btn-success" id="clean-btn">
+                <i class="fas fa-broom"></i> 开始清理
+            </button>
+        </div>
+        
+        <!-- 进度显示区域 -->
+        <div class="progress-card" id="progress-container">
+            <div class="progress-header">
+                <span>清理进度</span>
+                <span id="progress-percent">0%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+        </div>
+        
+        <!-- 统计信息区域 -->
+        <div class="stats-section" id="stats-section">
+            <h2 class="section-title">清理统计</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon removed">
+                        <i class="fas fa-trash-alt"></i>
+                    </div>
+                    <div class="stat-value" id="removed-lines-count">0</div>
+                    <div class="stat-label">删除行</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon modified">
+                        <i class="fas fa-edit"></i>
+                    </div>
+                    <div class="stat-value" id="modified-lines-count">0</div>
+                    <div class="stat-label">修改行</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon cleaned">
+                        <i class="fas fa-broom"></i>
+                    </div>
+                    <div class="stat-value" id="cleaned-lines-count">0</div>
+                    <div class="stat-label">清理字符</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 字符类型统计表格 -->
+        <div class="table-section" id="table-section">
+            <div class="table-card">
+                <div class="table-header">
+                    <h3 class="table-title">字符类型统计</h3>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>字符类型</th>
+                            <th>数量</th>
+                            <th>占比</th>
+                        </tr>
+                    </thead>
+                    <tbody id="char-stats-table">
+                        <!-- 字符类型统计将在这里显示 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- 操作按钮区域 -->
+        <div class="action-buttons" id="action-buttons" style="display: none;">
+            <button class="btn btn-primary" id="download-btn">
+                <i class="fas fa-download"></i> 下载清理后的文件
+            </button>
+            <button class="btn btn-outline" id="reset-btn">
+                <i class="fas fa-redo"></i> 处理新文件
+            </button>
+        </div>
+    </div>
+    
+    <!-- 高级设置模态框 -->
+    <div class="modal" id="settings-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">高级设置</h3>
+                <button class="close-btn" id="close-modal">&times;</button>
+            </div>
+            
+            <div class="form-group">
+                <label for="regex-input">自定义正则表达式</label>
+                <textarea id="regex-input" placeholder="输入自定义正则表达式..."></textarea>
+                <p class="form-note">
+                    默认正则表达式: <code>[^\\u4e00-\\u9fa5a-zA-Z0-9\\s,.!?;:，。！？；：\'"“”‘’、~《》〈〉【】〖〗…—\\-·]</code>
+                </p>
+                <p class="form-note">
+                    该正则表达式用于匹配需要删除的字符。保留中文字符、英文字母、数字、空格和标点符号。
+                </p>
+            </div>
+            
+            <div class="form-group">
+                <label for="preset-select">预设规则</label>
+                <select id="preset-select" class="form-control">
+                    <option value="">-- 选择预设规则 --</option>
+                    <option value="basic">基本清理（保留中英文、数字和标点）</option>
+                    <option value="strict">严格清理（仅保留中英文和数字）</option>
+                    <option value="keep-space">保留空格（保留所有空格）</option>
+                    <option value="no-space">删除所有空格</option>
+                </select>
+            </div>
+            
+            <div class="form-actions">
+                <button class="btn btn-outline" id="reset-regex">重置为默认</button>
+                <button class="btn btn-primary" id="save-settings">保存设置</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 页脚区域 -->
+    <footer>
+        <div class="container">
+            <p>文本清理工具 &copy; 2025 | https://github.com/hongxzz</p>
+            <div class="advanced-settings">
+                <a class="settings-link" id="settings-link">
+                    高级设置
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // ===========================================
+        // ================ DOM元素引用 ================
+        // ===========================================
+        const dropArea = document.getElementById('drop-area');
+        const fileInput = document.getElementById('file-input');
+        const selectFileBtn = document.getElementById('select-file-btn');
+        const fileInfo = document.getElementById('file-info');
+        const fileName = document.getElementById('file-name');
+        const fileSize = document.getElementById('file-size');
+        const lineCount = document.getElementById('line-count');
+        const charCount = document.getElementById('char-count');
+        const actionSection = document.getElementById('action-section');
+        const cleanBtn = document.getElementById('clean-btn');
+        const progressContainer = document.getElementById('progress-container');
+        const progressFill = document.getElementById('progress-fill');
+        const progressPercent = document.getElementById('progress-percent');
+        const statsSection = document.getElementById('stats-section');
+        const tableSection = document.getElementById('table-section');
+        const charStatsTable = document.getElementById('char-stats-table');
+        const actionButtons = document.getElementById('action-buttons');
+        const downloadBtn = document.getElementById('download-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const removedLinesCount = document.getElementById('removed-lines-count');
+        const modifiedLinesCount = document.getElementById('modified-lines-count');
+        const cleanedLinesCount = document.getElementById('cleaned-lines-count');
+        const settingsLink = document.getElementById('settings-link');
+        const settingsModal = document.getElementById('settings-modal');
+        const closeModal = document.getElementById('close-modal');
+        const regexInput = document.getElementById('regex-input');
+        const presetSelect = document.getElementById('preset-select');
+        const resetRegexBtn = document.getElementById('reset-regex');
+        const saveSettingsBtn = document.getElementById('save-settings');
+        
+        // ===========================================
+        // ================ 全局变量 ==================
+        // ===========================================
+        let currentFile = null; // 当前处理的文件对象
+        let cleanedContent = ''; // 清理后的文本内容
+        let stats = {
+            removedLines: 0, // 删除的行数
+            modifiedLines: 0, // 修改的行数
+            cleanedChars: 0, // 清理的字符数
+            charTypes: {
+                control: 0, // 控制字符
+                symbol: 0, // 符号字符
+                other: 0, // 其他字符
+                letter: 0, // 其他语言字母
+                emoji: 0 // 表情符号
+            }
+        };
+        
+        // 默认正则表达式
+        const defaultRegex = '[^\\u4e00-\\u9fa5a-zA-Z0-9\\s,.!?;:，。！？；：\'"“”‘’、~《》〈〉【】〖〗…—\\-·]';
+        let customRegex = defaultRegex; // 当前使用的正则表达式
+        
+        // ===========================================
+        // ================ 初始化函数 ================
+        // ===========================================
+        function init() {
+            // 事件监听器
+            selectFileBtn.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', handleFileSelect);
+            cleanBtn.addEventListener('click', startCleaning);
+            downloadBtn.addEventListener('click', downloadCleanedFile);
+            resetBtn.addEventListener('click', resetApp);
+            
+            // 高级设置
+            settingsLink.addEventListener('click', openSettingsModal);
+            closeModal.addEventListener('click', closeSettingsModal);
+            resetRegexBtn.addEventListener('click', resetToDefaultRegex);
+            saveSettingsBtn.addEventListener('click', saveSettings);
+            presetSelect.addEventListener('change', applyPreset);
+            
+            // 拖放功能
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropArea.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, unhighlight, false);
+            });
+            
+            dropArea.addEventListener('drop', handleDrop, false);
+        }
+        
+        // ===========================================
+        // ================ 工具函数 ==================
+        // ===========================================
+        
+        /**
+         * 阻止默认事件
+         * @param {Event} e - 事件对象
+         */
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        /**
+         * 高亮拖放区域
+         */
+        function highlight() {
+            dropArea.style.borderColor = 'var(--primary-color)';
+            dropArea.style.backgroundColor = 'rgba(78, 115, 223, 0.05)';
+        }
+        
+        /**
+         * 取消高亮拖放区域
+         */
+        function unhighlight() {
+            dropArea.style.borderColor = 'var(--border-color)';
+            dropArea.style.backgroundColor = 'white';
+        }
+        
+        /**
+         * 处理拖放事件
+         * @param {Event} e - 拖放事件对象
+         */
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            
+            if (files.length) {
+                handleFiles(files[0]);
+            }
+        }
+        
+        /**
+         * 处理文件选择事件
+         * @param {Event} e - 文件选择事件对象
+         */
+        function handleFileSelect(e) {
+            const files = e.target.files;
+            if (files.length) {
+                handleFiles(files[0]);
+            }
+        }
+        
+        /**
+         * 处理选择的文件
+         * @param {File} file - 用户选择的文件对象
+         */
+        function handleFiles(file) {
+            // 检查文件类型
+            if (!file.type.includes('text/plain') && !file.name.toLowerCase().endsWith('.txt')) {
+                alert('请选择文本文件 (.txt)');
+                return;
+            }
+            
+            // 检查文件大小
+            if (file.size > 100 * 1024 * 1024) {
+                alert('文件大小超过100MB限制');
+                return;
+            }
+            
+            currentFile = file;
+            
+            // 显示文件信息
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            fileInfo.style.display = 'block';
+            
+            // 显示操作按钮
+            actionSection.style.display = 'block';
+            cleanBtn.innerHTML = '<i class="fas fa-broom"></i> 开始清理';
+            
+            // 隐藏其他部分
+            progressContainer.style.display = 'none';
+            statsSection.style.display = 'none';
+            tableSection.style.display = 'none';
+            actionButtons.style.display = 'none';
+            
+            // 读取文件内容
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                
+                // 更新统计信息
+                const lines = content.split('\n');
+                lineCount.textContent = lines.length;
+                charCount.textContent = content.length;
+            };
+            reader.readAsText(file);
+        }
+        
+        /**
+         * 格式化文件大小
+         * @param {number} bytes - 文件大小（字节）
+         * @returns {string} 格式化后的文件大小
+         */
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        /**
+         * 重置应用状态
+         */
+        function resetApp() {
+            // 重置所有状态
+            currentFile = null;
+            cleanedContent = '';
+            stats = {
+                removedLines: 0,
+                modifiedLines: 0,
+                cleanedChars: 0,
+                charTypes: {
+                    control: 0,
+                    symbol: 0,
+                    other: 0,
+                    letter: 0,
+                    emoji: 0
+                }
+            };
+            
+            // 重置UI
+            fileInfo.style.display = 'none';
+            actionSection.style.display = 'none';
+            progressContainer.style.display = 'none';
+            statsSection.style.display = 'none';
+            tableSection.style.display = 'none';
+            actionButtons.style.display = 'none';
+            
+            // 重置文件输入
+            fileInput.value = '';
+        }
+        
+        /**
+         * 开始清理文本
+         */
+        function startCleaning() {
+            if (!currentFile) return;
+            
+            // 重置状态
+            cleanedContent = '';
+            stats = {
+                removedLines: 0,
+                modifiedLines: 0,
+                cleanedChars: 0,
+                charTypes: {
+                    control: 0,
+                    symbol: 0,
+                    other: 0,
+                    letter: 0,
+                    emoji: 0
+                }
+            };
+            
+            // 显示进度条
+            progressContainer.style.display = 'block';
+            cleanBtn.disabled = true;
+            cleanBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 清理中...';
+            
+            // 读取文件内容
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                cleanContent(content);
+            };
+            reader.readAsText(currentFile);
+        }
+        
+        /**
+         * 清理文本内容
+         * @param {string} content - 原始文本内容
+         */
+        function cleanContent(content) {
+            // 创建正则表达式
+            let regex;
+            try {
+                regex = new RegExp(customRegex, 'g');
+            } catch (e) {
+                alert('自定义正则表达式无效，使用默认表达式');
+                regex = new RegExp(defaultRegex, 'g');
+            }
+            
+            // 分割为行
+            const lines = content.split('\n');
+            const totalLines = lines.length;
+            cleanedContent = '';
+            
+            // 清理每一行
+            for (let i = 0; i < totalLines; i++) {
+                let originalLine = lines[i];
+                let cleanedLine = originalLine;
+                let lineHadModification = false;
+                
+                // 删除不需要的字符
+                cleanedLine = cleanedLine.replace(regex, (match) => {
+                    lineHadModification = true;
+                    stats.cleanedChars++;
+                    classifyChar(match);
+                    return '';
+                });
+                
+                // 删除行首尾空白字符
+                cleanedLine = cleanedLine.trim();
+                
+                // 检查是否有变化
+                if (originalLine !== cleanedLine) {
+                    // 确定变化类型
+                    if (cleanedLine === '') {
+                        stats.removedLines++;
+                    } else if (lineHadModification) {
+                        stats.modifiedLines++;
+                    }
+                }
+                
+                // 保留非空行
+                if (cleanedLine) {
+                    cleanedContent += cleanedLine + '\n';
+                }
+                
+                // 更新进度
+                if (i % 100 === 0 || i === totalLines - 1) {
+                    const progress = Math.round((i + 1) / totalLines * 100);
+                    updateProgress(progress);
+                    
+                    // 处理完成后显示结果
+                    if (i === totalLines - 1) {
+                        showResults();
+                    }
+                }
+            }
+        }
+        
+        /**
+         * 分类字符类型
+         * @param {string} char - 需要分类的字符
+         */
+        function classifyChar(char) {
+            const code = char.charCodeAt(0);
+            
+            // 控制字符 (0-31, 127-159)
+            if ((code >= 0x0000 && code <= 0x001F) || (code >= 0x007F && code <= 0x009F)) {
+                stats.charTypes.control++;
+            }
+            // 符号字符
+            else if ((code >= 0x2000 && code <= 0x206F) || // 常用标点
+                     (code >= 0x2100 && code <= 0x214F) || // 类字母符号
+                     (code >= 0x2190 && code <= 0x21FF) || // 箭头
+                     (code >= 0x2200 && code <= 0x22FF) || // 数学运算符
+                     (code >= 0x2300 && code <= 0x23FF) || // 杂项技术符号
+                     (code >= 0x2600 && code <= 0x26FF) || // 杂项符号
+                     (code >= 0x2700 && code <= 0x27BF)) { // 装饰符号
+                stats.charTypes.symbol++;
+            }
+            // 表情符号
+            else if ((code >= 0x1F600 && code <= 0x1F64F) || // 表情符号
+                     (code >= 0x1F300 && code <= 0x1F5FF) || // 杂项符号和象形文字
+                     (code >= 0x1F900 && code <= 0x1F9FF)) { // 补充符号和象形文字
+                stats.charTypes.emoji++;
+            }
+            // 其他语言字母
+            else if ((code >= 0x0400 && code <= 0x04FF) || // 西里尔字母
+                     (code >= 0x0530 && code <= 0x058F) || // 亚美尼亚字母
+                     (code >= 0x0590 && code <= 0x05FF) || // 希伯来字母
+                     (code >= 0x0600 && code <= 0x06FF) || // 阿拉伯字母
+                     (code >= 0x0900 && code <= 0x097F) || // 梵文字母
+                     (code >= 0x0E00 && code <= 0x0E7F) || // 泰文字母
+                     (code >= 0x1100 && code <= 0x11FF) || // 谚文字母
+                     (code >= 0x3040 && code <= 0x309F) || // 平假名
+                     (code >= 0x30A0 && code <= 0x30FF)) { // 片假名
+                stats.charTypes.letter++;
+            }
+            // 其他字符
+            else {
+                stats.charTypes.other++;
+            }
+        }
+        
+        /**
+         * 更新进度条
+         * @param {number} percent - 进度百分比
+         */
+        function updateProgress(percent) {
+            progressFill.style.width = `${percent}%`;
+            progressPercent.textContent = `${percent}%`;
+        }
+        
+        /**
+         * 显示清理结果
+         */
+        function showResults() {
+            // 更新按钮状态
+            cleanBtn.disabled = false;
+            cleanBtn.innerHTML = '<i class="fas fa-check"></i> 清理完成';
+            
+            // 更新统计信息
+            removedLinesCount.textContent = stats.removedLines;
+            modifiedLinesCount.textContent = stats.modifiedLines;
+            cleanedLinesCount.textContent = stats.cleanedChars;
+            
+            // 显示统计信息
+            statsSection.style.display = 'block';
+            
+            // 显示字符类型统计表格
+            renderCharStatsTable();
+            tableSection.style.display = 'block';
+            
+            // 显示操作按钮
+            actionButtons.style.display = 'flex';
+        }
+        
+        /**
+         * 渲染字符类型统计表格
+         */
+        function renderCharStatsTable() {
+            const totalChars = stats.cleanedChars;
+            let tableHtml = '';
+            
+            // 添加控制字符行
+            tableHtml += `
+                <tr>
+                    <td>
+                        <div class="char-type">
+                            <div class="char-icon control">
+                                <i class="fas fa-terminal"></i>
+                            </div>
+                            <span>控制字符</span>
+                        </div>
+                    </td>
+                    <td>${stats.charTypes.control}</td>
+                    <td>${totalChars ? ((stats.charTypes.control / totalChars * 100).toFixed(2) + '%') : '0%'}</td>
+                </tr>
+            `;
+            
+            // 添加符号字符行
+            tableHtml += `
+                <tr>
+                    <td>
+                        <div class="char-type">
+                            <div class="char-icon symbol">
+                                <i class="fas fa-asterisk"></i>
+                            </div>
+                            <span>符号字符</span>
+                        </div>
+                    </td>
+                    <td>${stats.charTypes.symbol}</td>
+                    <td>${totalChars ? ((stats.charTypes.symbol / totalChars * 100).toFixed(2) + '%') : '0%'}</td>
+                </tr>
+            `;
+            
+            // 添加其他语言字母行
+            tableHtml += `
+                <tr>
+                    <td>
+                        <div class="char-type">
+                            <div class="char-icon letter">
+                                <i class="fas fa-font"></i>
+                            </div>
+                            <span>其他语言字母</span>
+                        </div>
+                    </td>
+                    <td>${stats.charTypes.letter}</td>
+                    <td>${totalChars ? ((stats.charTypes.letter / totalChars * 100).toFixed(2) + '%') : '0%'}</td>
+                </tr>
+            `;
+            
+            // 添加表情符号行
+            tableHtml += `
+                <tr>
+                    <td>
+                        <div class="char-type">
+                            <div class="char-icon emoji">
+                                <i class="fas fa-smile"></i>
+                            </div>
+                            <span>表情符号</span>
+                        </div>
+                    </td>
+                    <td>${stats.charTypes.emoji}</td>
+                    <td>${totalChars ? ((stats.charTypes.emoji / totalChars * 100).toFixed(2) + '%') : '0%'}</td>
+                </tr>
+            `;
+            
+            // 添加其他字符行
+            tableHtml += `
+                <tr>
+                    <td>
+                        <div class="char-type">
+                            <div class="char-icon other">
+                                <i class="fas fa-question"></i>
+                            </div>
+                            <span>其他字符</span>
+                        </div>
+                    </td>
+                    <td>${stats.charTypes.other}</td>
+                    <td>${totalChars ? ((stats.charTypes.other / totalChars * 100).toFixed(2) + '%') : '0%'}</td>
+                </tr>
+            `;
+            
+            // 添加总计行
+            tableHtml += `
+                <tr>
+                    <td><strong>总计</strong></td>
+                    <td><strong>${totalChars}</strong></td>
+                    <td><strong>100%</strong></td>
+                </tr>
+            `;
+            
+            charStatsTable.innerHTML = tableHtml;
+        }
+        
+        /**
+         * 下载清理后的文件
+         */
+        function downloadCleanedFile() {
+            if (!cleanedContent) return;
+            
+            // 创建Blob对象
+            const blob = new Blob([cleanedContent], { type: 'text/plain' });
+            
+            // 创建下载链接
+            const url = URL.createObjectURL(blob);
+            
+            // 设置下载文件名
+            const fileName = currentFile.name.replace('.txt', '_cleaned.txt');
+            
+            // 创建下载链接并触发点击
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            
+            // 清理
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 100);
+        }
+        
+        // ===========================================
+        // ================ 高级设置功能 ================
+        // ===========================================
+        
+        /**
+         * 打开高级设置模态框
+         */
+        function openSettingsModal() {
+            regexInput.value = customRegex;
+            presetSelect.value = '';
+            settingsModal.style.display = 'flex';
+        }
+        
+        /**
+         * 关闭高级设置模态框
+         */
+        function closeSettingsModal() {
+            settingsModal.style.display = 'none';
+        }
+        
+        /**
+         * 重置为默认正则表达式
+         */
+        function resetToDefaultRegex() {
+            regexInput.value = defaultRegex;
+            presetSelect.value = '';
+        }
+        
+        /**
+         * 保存高级设置
+         */
+        function saveSettings() {
+            const regex = regexInput.value.trim();
+            if (regex) {
+                try {
+                    // 测试正则表达式是否有效
+                    new RegExp(regex);
+                    customRegex = regex;
+                    alert('设置已保存，请处理新文件以应用新设置');
+                    closeSettingsModal();
+                } catch (e) {
+                    alert('正则表达式无效，请检查语法');
+                }
+            } else {
+                alert('请输入有效的正则表达式');
+            }
+        }
+        
+        /**
+         * 应用预设规则
+         */
+        function applyPreset() {
+            const preset = presetSelect.value;
+            switch(preset) {
+                case 'basic':
+                    regexInput.value = defaultRegex;
+                    break;
+                case 'strict':
+                    regexInput.value = '[^\\u4e00-\\u9fa5a-zA-Z0-9]';
+                    break;
+                case 'keep-space':
+                    regexInput.value = '[^\\u4e00-\\u9fa5a-zA-Z0-9\\s]';
+                    break;
+                case 'no-space':
+                    regexInput.value = '[^\\u4e00-\\u9fa5a-zA-Z0-9]';
+                    break;
+            }
+        }
+        
+        // 初始化应用
+        init();
+    </script>
+</body>
+</html>
